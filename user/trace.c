@@ -14,12 +14,12 @@ main(int argc, char *argv[])
   }
   trace_id = atoi(argv[1]);
   trace(trace_id);
-  nargs=argc - 3;
+  nargs=argc - 2;
   args=(char**)malloc(sizeof(char*)* nargs);
 
   for(i=0;i<nargs;i++){
-  	args[i] = (char*) malloc(sizeof(char)*strlen(argv[i+3]));
-  	memcpy(args[i],argv[i+3],strlen(argv[i+3]));
+  	args[i] = (char*) malloc(sizeof(char)*strlen(argv[i+2]));
+  	memcpy(args[i],argv[i+2],strlen(argv[i+2]));
   }
   exec(argv[2],args);
   trace(0);

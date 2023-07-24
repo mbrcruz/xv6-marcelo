@@ -21,3 +21,5 @@
 #define SYS_mkdir  20
 #define SYS_close  21
 #define SYS_trace  22
+
+static char *SYSTEM_CALL_NAMES[]= { "fork","exit","wait","pipe","read",	"kill",	"exec",	"fstat","chdir"};
