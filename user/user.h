@@ -1,4 +1,5 @@
 struct stat;
+struct sysinfo; 
 
 // system calls
 int fork(void);
@@ -11,6 +12,7 @@ int close(int);
 int kill(int);
 int exec(const char*, char**);
 int trace(int);
+int sysinfo(struct sysinfo*);
 int open(const char*, int);
 int mknod(const char*, short, short);
 int unlink(const char*);

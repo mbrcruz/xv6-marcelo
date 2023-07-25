@@ -503,3 +503,15 @@ sys_pipe(void)
   }
   return 0;
 }
+uint64
+sys_sysinfo(void)
+{
+	struct proc *p = myproc();
+	struct sysinfo info;
+	uint64 addr;
+	argaddr(0, &addr);
+	info.mem = 2;
+	copyout(p->pagetable, addr, (char *)&info, sizeof(info));
+
+	return 0;
+}
