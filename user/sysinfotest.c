@@ -10,6 +10,6 @@ int main(int argc,char **argv){
 
 	struct sysinfo info;
 	sysinfo(&info);
-	printf("info=%d\n",info.mem);
+	printf("free mem pages=%d\n",info.pages);
 	return 0;
 }

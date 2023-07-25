@@ -11,5 +11,6 @@ struct stat {
 };
 
 struct sysinfo { 
- int mem;
+ uint pages;
+ uint procs;
 };

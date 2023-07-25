@@ -510,8 +510,6 @@ sys_sysinfo(void)
 	struct sysinfo info;
 	uint64 addr;
 	argaddr(0, &addr);
-	info.mem = 2;
-	copyout(p->pagetable, addr, (char *)&info, sizeof(info));
-
-	return 0;
+	info.pages= kfreemem();
+	return copyout(p->pagetable, addr, (char *)&info, sizeof(info));
 }
