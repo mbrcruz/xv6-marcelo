@@ -511,5 +511,6 @@ sys_sysinfo(void)
 	uint64 addr;
 	argaddr(0, &addr);
 	info.pages= kfreemem();
+  info.procs = procnum();
 	return copyout(p->pagetable, addr, (char *)&info, sizeof(info));
 }

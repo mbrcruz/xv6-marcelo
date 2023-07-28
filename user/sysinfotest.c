@@ -11,5 +11,6 @@ int main(int argc,char **argv){
 	struct sysinfo info;
 	sysinfo(&info);
 	printf("free mem pages=%d\n",info.pages);
+	printf("Number running processes=%d\n",info.procs);
 	return 0;
 }

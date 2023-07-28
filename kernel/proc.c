@@ -683,3 +683,19 @@ procdump(void)
     printf("\n");
   }
 }
+
+int procnum(void) {
+  struct proc *p;
+  int count = 0;
+
+  // Percorre a lista de processos ativos
+  for (p = proc; p < &proc[NPROC]; p++) {
+    acquire(&p->lock);
+    if (p->state != UNUSED) {
+      count++;
+    }
+    release(&p->lock);
+  }
+
+  return count;
+}
