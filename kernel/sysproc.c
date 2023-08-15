@@ -100,3 +100,23 @@ sys_trace(void)
  p->trace_mask= trace_id;
  return 0;
 }
+
+uint64
+sys_sigalarm(void)
+{
+  struct proc *p = myproc();
+  int ticks;
+  argint(0,&ticks);
+  argaddr(1, p->handle);
+  acquire(&tickslock);
+  p->ticks=ticks;
+  release(&tickslock); 
+  return 0;
+}
+
+uint64
+sys_sigreturn(void)
+{ 
+ //struct proc *p = myproc();
+ return 0;
+}

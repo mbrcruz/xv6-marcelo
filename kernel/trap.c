@@ -47,9 +47,9 @@ usertrap(void)
 
   struct proc *p = myproc();
   
-  // save user program counter.
-  p->trapframe->epc = r_sepc();
   
+  // save user program counter.  
+  p->trapframe->epc = r_sepc();
   if(r_scause() == 8){
     // system call
 
@@ -77,8 +77,37 @@ usertrap(void)
     exit(-1);
 
   // give up the CPU if this is a timer interrupt.
-  if(which_dev == 2)
-    yield();
+  if(which_dev == 2) { 
+    if (p->ticks > 0)
+    {
+      if ( p->ticks_counter == 2)
+      {
+        p->ticks_counter=0;
+        p->save_epc= p->trapframe->epc;
+        p->trapframe->epc = *(p->handle); 
+
+      } else { 
+         p->ticks_counter+=1;
+         //printf("tickes_count=%d\n",p->ticks_counter);
+         if ( p->save_epc > 0 )
+         {
+          p->trapframe->epc = p->save_epc;
+          p->save_epc= 0;
+         }
+      } 
+    } 
+    else { 
+      if ( p->save_epc > 0 )
+      {
+        p->trapframe->epc = p->save_epc;
+        p->save_epc= 0;
+      }
+      yield();
+    }
+    
+  }
+  
+    
 
   usertrapret();
 }
