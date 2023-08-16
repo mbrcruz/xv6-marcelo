@@ -117,5 +117,9 @@ sys_sigalarm(void)
 uint64
 sys_sigreturn(void)
 {  
+//  struct proc *p = myproc();
+//  acquire(&tickslock);
+//  p->trapframe=  &p->trapframe_save;
+//  release(&tickslock); 
  return 0;
 }
