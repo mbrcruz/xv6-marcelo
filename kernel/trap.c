@@ -80,10 +80,12 @@ usertrap(void)
   if(which_dev == 2) { 
     if (p->ticks > 0)
     {      
-      if ( p->ticks_counter == p->ticks)
-      {              
+      if ( p->ticks_counter == p->ticks && p->handle_running == 0)
+      {       
+        memmove(&p->trapframe_save,p->trapframe,sizeof(struct trapframe));    
         p->trapframe_save= (*p->trapframe);        
         p->trapframe->epc = *(p->handle); 
+        p->handle_running=1;
         p->ticks_counter=0;
       } 
       else 

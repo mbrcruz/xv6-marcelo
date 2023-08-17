@@ -127,6 +127,7 @@ found:
   p->ticks = 0;
   p->ticks_counter = 0;
   p->save_epc = 0;
+  p->handle_running =0;
   p->handle= (uint64 *)kalloc();
   p->state = USED;
 

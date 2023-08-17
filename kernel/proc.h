@@ -96,6 +96,7 @@ struct proc {
   int ticks;                   // tickes for interruption
   int ticks_counter;           // count tickes for interruption
   uint64 save_epc;             // handle for interruption
+  int handle_running;          //control if there is handle running
 
   // wait_lock must be held when using this:
   struct proc *parent;         // Parent process
