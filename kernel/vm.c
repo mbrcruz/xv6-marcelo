@@ -333,6 +333,7 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
   return -1;
 }
 
+
 // Given a parent process's page table, copy
 // its memory into a child's page table.
 // Copies both the page table and the
@@ -340,7 +341,7 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
 // returns 0 on success, -1 on failure.
 // frees any allocated pages on failure.
 int
-cow_copy(pagetable_t old, uint64 sz)
+cow_copy(pagetable_t old, pagetable_t new, uint64 sz)
 {
   pte_t *pte;  
   uint64 pa, i;
@@ -352,18 +353,15 @@ cow_copy(pagetable_t old, uint64 sz)
       panic("uvmcopy: pte should exist");
     if((*pte & PTE_V) == 0)
       panic("uvmcopy: page not present");
-    pa = PTE2PA(*pte);
+    pa = PTE2PA(*pte); 
     if ( !(*pte & PTE_W)){
       *pte= I_PTE_W(*pte);
     } 
-     if ( *pte & PTE_V){
-      *pte= I_PTE_V(*pte);
-    }    
     flags = PTE_FLAGS(*pte);
     if((mem = kalloc()) == 0)
       goto err;   
     memmove(mem, (char*)pa, PGSIZE);
-    if(mappages(old, i, PGSIZE, (uint64)mem, flags) != 0){
+    if(mappages(new, i, PGSIZE, (uint64)mem, flags) != 0){
       kfree(mem);
       goto err;
     }
@@ -372,9 +370,11 @@ cow_copy(pagetable_t old, uint64 sz)
   return 0;
 
  err:
-  uvmunmap(old, 0, i / PGSIZE, 1);
+  uvmunmap(new, 0, i / PGSIZE, 1);
   return -1;
 }
+
+
 
 // Given a parent process's page table, copy
 // its memory into a child's page table.
