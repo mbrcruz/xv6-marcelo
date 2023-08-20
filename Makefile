@@ -120,6 +120,7 @@ UPROGS=\
 	$U/_bttest\
 	$U/_call\
 	$U/_cat\
+	$U/_cowtest\
 	$U/_echo\
 	$U/_forktest\
 	$U/_grep\

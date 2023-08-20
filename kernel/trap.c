@@ -65,9 +65,35 @@ usertrap(void)
     intr_on();
 
     syscall();
-  } else if((which_dev = devintr()) != 0){
+  
+  } else if (r_scause() == 2) { 
+    //    
+    if(uvmcopy(p->pagetable, p->pagetable, p->sz) < 0)
+    {
+      setkilled(p);    
+    }
+  }  else if((which_dev = devintr()) != 0){
     // ok
-  } else {
+    if(which_dev == 2) { 
+      if (p->ticks > 0)
+      {      
+        if ( p->ticks_counter == p->ticks && p->handle_running == 0)
+        {       
+          memmove(&p->trapframe_save,p->trapframe,sizeof(struct trapframe));    
+          p->trapframe_save= (*p->trapframe);        
+          p->trapframe->epc = *(p->handle); 
+          p->handle_running=1;
+          p->ticks_counter=0;
+        } 
+        else 
+        {            
+          p->ticks_counter+=1;    
+        } 
+      }  
+    }
+
+  }   
+  else {
     printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
     printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
     setkilled(p);
@@ -77,27 +103,8 @@ usertrap(void)
     exit(-1);
 
   // give up the CPU if this is a timer interrupt.
-  if(which_dev == 2) { 
-    if (p->ticks > 0)
-    {      
-      if ( p->ticks_counter == p->ticks && p->handle_running == 0)
-      {       
-        memmove(&p->trapframe_save,p->trapframe,sizeof(struct trapframe));    
-        p->trapframe_save= (*p->trapframe);        
-        p->trapframe->epc = *(p->handle); 
-        p->handle_running=1;
-        p->ticks_counter=0;
-      } 
-      else 
-      {            
-        p->ticks_counter+=1;    
-      } 
-    } 
-    yield();
-
-    
-    
-  }
+  if(which_dev == 2)    
+    yield(); 
   
     
 
