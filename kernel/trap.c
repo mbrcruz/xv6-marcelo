@@ -67,11 +67,13 @@ usertrap(void)
     syscall();
   
   } else if (r_scause() == 2) { 
-    //    
-    if(uvmcopy(p->pagetable, p->pagetable, p->sz) < 0)
+    //  
+    pagetable_t  new_page = proc_pagetable(p);  
+    if(uvmcopy(p->pagetable, new_page, p->sz) < 0)
     {
       setkilled(p);    
     }
+    p->pagetable= new_page;
   }  else if((which_dev = devintr()) != 0){
     // ok
     if(which_dev == 2) { 
