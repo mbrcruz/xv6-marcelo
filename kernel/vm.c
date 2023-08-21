@@ -394,11 +394,8 @@ cow_copy(pagetable_t old, uint64 sz)
         printf("Out of memory\n");
         return -1;
       } 
-      else {
-        if ( ! ( *pte & PTE_W)){
-          *pte= I_PTE_W(*pte);
-        } 
-        flags = PTE_FLAGS(*pte);
+      else {    
+        flags = (PTE_FLAGS(*pte) & (~PTE_COW)) | PTE_W;
         memmove(mem, (char *)pa, PGSIZE);
         uvmunmap(old, PGROUNDDOWN(va), 1, 0);
         if (mappages(old, PGROUNDDOWN(va), PGSIZE, (uint64)mem, flags) != 0)
