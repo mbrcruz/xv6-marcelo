@@ -333,49 +333,6 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
   return -1;
 }
 
-
-// Given a parent process's page table, copy
-// its memory into a child's page table.
-// Copies both the page table and the
-// physical memory.
-// returns 0 on success, -1 on failure.
-// frees any allocated pages on failure.
-int
-cow_copy(pagetable_t old, pagetable_t new, uint64 sz)
-{
-  pte_t *pte;  
-  uint64 pa, i;
-  uint flags;
-  char *mem;
-  
-  for(i = 0; i < sz; i += PGSIZE){
-    if((pte = walk(old, i, 0)) == 0)
-      panic("uvmcopy: pte should exist");
-    if((*pte & PTE_V) == 0)
-      panic("uvmcopy: page not present");
-    pa = PTE2PA(*pte); 
-    if ( !(*pte & PTE_W)){
-      *pte= I_PTE_W(*pte);
-    } 
-    flags = PTE_FLAGS(*pte);
-    if((mem = kalloc()) == 0)
-      goto err;   
-    memmove(mem, (char*)pa, PGSIZE);
-    if(mappages(new, i, PGSIZE, (uint64)mem, flags) != 0){
-      kfree(mem);
-      goto err;
-    }
-  }
-  
-  return 0;
-
- err:
-  uvmunmap(new, 0, i / PGSIZE, 1);
-  return -1;
-}
-
-
-
 // Given a parent process's page table, copy
 // its memory into a child's page table.
 // Copies both the page table and the
@@ -397,7 +354,10 @@ copy_on_write(pagetable_t old, pagetable_t new, uint64 sz)
     pa = PTE2PA(*pte);    
     if ( *pte & PTE_W){
       *pte= I_PTE_W(*pte);
-    }   
+    } 
+    if (!( *pte & PTE_COW )){
+      *pte= I_PTE_COW(*pte);
+    }          
     flags = PTE_FLAGS(*pte); 
     if(mappages(new, i, PGSIZE, (uint64)pa, flags) != 0){    
       goto err;
@@ -409,6 +369,47 @@ copy_on_write(pagetable_t old, pagetable_t new, uint64 sz)
  err:
   uvmunmap(new, 0, i / PGSIZE, 1);
   return -1;
+}
+
+// Given a parent process's page table, copy
+// its memory into a child's page table.
+// Copies both the page table and the
+// physical memory.
+// returns 0 on success, -1 on failure.
+// frees any allocated pages on failure.
+int
+cow_copy(pagetable_t old, uint64 sz)
+{
+  pte_t *pte;    
+  uint flags;
+  char *mem;
+  
+    uint64 va = r_stval();
+    pte = walk(old, va, 0);
+    if (va < sz && pte != 0 && (*pte & PTE_V) && (*pte & PTE_COW))
+    {
+      uint64 pa = walkaddr(old, va);
+      
+      if ((mem = kalloc()) == 0) {
+        printf("Out of memory\n");
+        return -1;
+      } 
+      else {
+        if ( ! ( *pte & PTE_W)){
+          *pte= I_PTE_W(*pte);
+        } 
+        flags = PTE_FLAGS(*pte);
+        memmove(mem, (char *)pa, PGSIZE);
+        uvmunmap(old, PGROUNDDOWN(va), 1, 0);
+        if (mappages(old, PGROUNDDOWN(va), PGSIZE, (uint64)mem, flags) != 0)
+        {
+          kfree(mem);
+          return -1;
+        }
+      }
+    } 
+  
+  return 0;
 }
 
 // mark a PTE invalid for user access.
