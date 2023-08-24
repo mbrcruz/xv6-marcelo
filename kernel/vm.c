@@ -354,10 +354,10 @@ copy_on_write(pagetable_t old, pagetable_t new, uint64 sz)
     pa = PTE2PA(*pte);    
     if ( *pte & PTE_W){
       *pte= I_PTE_W(*pte);
-    } 
-    if (!( *pte & PTE_COW )){
-      *pte= I_PTE_COW(*pte);
-    }          
+      if (!( *pte & PTE_COW )){
+        *pte= I_PTE_COW(*pte);
+      }  
+    }         
     flags = PTE_FLAGS(*pte); 
     if(mappages(new, i, PGSIZE, (uint64)pa, flags) != 0){    
       goto err;
@@ -371,24 +371,19 @@ copy_on_write(pagetable_t old, pagetable_t new, uint64 sz)
   return -1;
 }
 
-// Given a parent process's page table, copy
-// its memory into a child's page table.
-// Copies both the page table and the
-// physical memory.
-// returns 0 on success, -1 on failure.
-// frees any allocated pages on failure.
+// copy cow pages on page fault
 int
-cow_copy(pagetable_t old, uint64 sz)
+cow_copy(pagetable_t page, uint64 sz)
 {
-  pte_t *pte;    
-  uint flags;
-  char *mem;
+    pte_t *pte;    
+    uint flags;
+    char *mem;
   
     uint64 va = r_stval();
-    pte = walk(old, va, 0);
+    pte = walk(page, va, 0);
     if (va < sz && pte != 0 && (*pte & PTE_V) && (*pte & PTE_COW))
     {
-      uint64 pa = walkaddr(old, va);
+      uint64 pa = walkaddr(page, va);
       
       if ((mem = kalloc()) == 0) {
         printf("Out of memory\n");
@@ -397,16 +392,18 @@ cow_copy(pagetable_t old, uint64 sz)
       else {    
         flags = (PTE_FLAGS(*pte) & (~PTE_COW)) | PTE_W;
         memmove(mem, (char *)pa, PGSIZE);
-        uvmunmap(old, PGROUNDDOWN(va), 1, 0);
-        if (mappages(old, PGROUNDDOWN(va), PGSIZE, (uint64)mem, flags) != 0)
+        uvmunmap(page, PGROUNDDOWN(va), 1, 0);
+        if (mappages(page, PGROUNDDOWN(va), PGSIZE, (uint64)mem, flags) != 0)
         {
           kfree(mem);
           return -1;
         }
       }
-    } 
-  
-  return 0;
+    } else { 
+      return -1;
+    }
+
+    return 0;
 }
 
 // mark a PTE invalid for user access.
