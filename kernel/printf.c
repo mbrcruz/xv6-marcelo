@@ -136,17 +136,14 @@ printfinit(void)
 
 void backtrace(void)
 {
-    uint64 sp,ra;
-    int frame = 0;
-    ra =0 ;
-
-    printf("Backtrace:\n");
-
-    sp = r_sp();    
-    while (sp != 0 && frame < 10) {        
-        ra = *(uint64 *)(sp+8);        
-        printf("[%d] sp %p  ra %p\n", frame, *(uint64 *)sp,ra); 
-        sp += 16;                    
-        frame++;
-    }
+  
+  uint64 sp;
+    
+  printf("Backtrace:\n");
+  sp = r_fp();
+  while (sp < PGROUNDUP(sp)) 
+  {
+    printf("%p\n", *((uint64*)(sp-8)));
+    sp = *((uint64*)(sp-16));
+  }
 }

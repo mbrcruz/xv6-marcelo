@@ -20,6 +20,7 @@ struct run {
 
 struct {
   struct spinlock lock;
+  int mem_reference[(PHYSTOP - KERNBASE) / PGSIZE];
   struct run *freelist;
 } kmem;
 
@@ -51,14 +52,19 @@ kfree(void *pa)
   if(((uint64)pa % PGSIZE) != 0 || (char*)pa < end || (uint64)pa >= PHYSTOP)
     panic("kfree");
 
-  // Fill with junk to catch dangling refs.
-  memset(pa, 1, PGSIZE);
-
-  r = (struct run*)pa;
-
   acquire(&kmem.lock);
-  r->next = kmem.freelist;
-  kmem.freelist = r;
+  if (--kmem.mem_reference[((uint64)pa-KERNBASE) / PGSIZE] <= 0) {
+      // Fill with junk to catch dangling refs.
+    memset(pa, 1, PGSIZE);
+
+    r = (struct run*)pa;
+
+    
+    r->next = kmem.freelist;
+    kmem.freelist = r;  
+  }
+
+
   release(&kmem.lock);
 }
 
@@ -72,8 +78,12 @@ kalloc(void)
 
   acquire(&kmem.lock);
   r = kmem.freelist;
-  if(r)
-    kmem.freelist = r->next;
+  if(r) 
+  {
+    kmem.freelist = r->next;   
+    kmem.mem_reference[(PGROUNDDOWN((uint64)r) - KERNBASE) / PGSIZE] = 1;
+  }    
+  
   release(&kmem.lock);
 
   if(r)
@@ -89,6 +99,14 @@ uint kfreemem(void){
 		mem_free++;
 	}
 	return mem_free;
+}
+
+void
+kreference(void *pa)
+{
+  acquire(&kmem.lock);
+  ++kmem.mem_reference[((uint64)pa-KERNBASE) / PGSIZE];
+  release(&kmem.lock);
 }
 
 
